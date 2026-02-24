@@ -16,3 +16,8 @@ class ResumeFacts(BaseModel):
     protocols: List[str]
     domains: List[str]
     responsibilities: List[str]
+
+class RewrittenResumeSections(BaseModel):
+    summary: str
+    hard_skills: List[str]
+    projects: Dict[str, List[str]]

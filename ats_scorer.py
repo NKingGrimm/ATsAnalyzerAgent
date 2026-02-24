@@ -1,15 +1,15 @@
 import json
 import ollama
-from schemas import ATSResult, ResumeFacts
+from schemas import ATSResult, ResumeFacts, RewrittenResumeSections
 from prompts import *
 
 MAX_SCORES = {
-    "core_embedded": 35,
-    "domain_match": 15,
-    "tools_protocols": 15,
+    "core_requirements": 35,
+    "role_relevance": 15,
+    "tools_technologies": 15,
     "experience_level": 15,
-    "keywords": 10,
-    "clarity": 10,
+    "keywords_phrasing": 10,
+    "clarity_structure": 10,
 }
 
 def fact_extraction_from_resume(resume: str) -> ResumeFacts:
@@ -28,9 +28,10 @@ def fact_extraction_from_resume(resume: str) -> ResumeFacts:
 
     try:
         raw = json.loads(response["message"]["content"])
-        print(raw)
+        ats_result = ResumeFacts(**raw)
     except Exception as e:
         raise RuntimeError("Invalid JSON returned by Llama") from e
+    return ats_result
 
 def enforce_balanced_rules(result: ATSResult) -> ATSResult:
     # Clamp category scores
@@ -45,18 +46,19 @@ def enforce_balanced_rules(result: ATSResult) -> ATSResult:
     # Balanced penalties
     missing = len(result.missing_required_skills)
     if missing == 1:
-        result.overall_score -= 12
+        result.overall_score -= 5
     elif missing == 2:
-        result.overall_score -= 22
+        result.overall_score -= 10
     elif missing > 2:
         result.overall_score = min(result.overall_score, 69)
 
     result.overall_score = max(0, min(result.overall_score, 100))
     return result
 
-def score_resume_against_job(job_description: str) -> ATSResult:
+def score_resume_against_job(job_description: str, resume_description: str) -> ATSResult:
     prompt = USER_PROMPT_TEMPLATE.format(
-        job_description=job_description
+        job_description = job_description,
+        resume_description = resume_description
     )
 
     response = ollama.chat(
@@ -108,13 +110,16 @@ def rewrite_resume(
         ]
     )
 
-    content = response["message"]["content"]
+    try:
+        raw = json.loads(response["message"]["content"])
+        rewrite_result = RewrittenResumeSections(**raw)
+    except Exception as e:
+        raise RuntimeError("Invalid JSON returned by Llama") from e
+    # # Refusal handling
+    # if '"refusal": true' in content:
+    #     raise RuntimeError("Resume rewrite refused due to insufficient factual support")
 
-    # Refusal handling
-    if '"refusal": true' in content:
-        raise RuntimeError("Resume rewrite refused due to insufficient factual support")
-
-    return content
+    return rewrite_result
 
 # def validate_no_new_skills(original_facts, rewritten_text):
 #     for skill in rewritten_text.split():
