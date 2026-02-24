@@ -1,0 +1,42 @@
+
+
+Descripción larga
+
+As Embedded Software Engineer in Capgemini you will design, develop, and deliver high-quality embedded software solutions for automotive Electronic Control Units (ECUs), applying Automotive SPICE (ASPICE) best practices across the full software development lifecycle, for an automotive project in Querétaro. 
+
+Your Role
+
+    Develop and integrate embedded software components in C/C++ for automotive ECUs and advanced systems (ADAS, Park Assist, Instrument Clusters, Vision Systems).
+    Analyze software requirements and define architecture and design in compliance with ASPICE standards.
+    Perform bench, integration, and system testing; support unit and module-level validation activities.
+    Diagnose and resolve software issues in development, production, and customer environments.
+    Collaborate closely with customers and global teams to ensure technical alignment, quality, and on-time delivery.
+
+Your Profile
+
+    Solid experience in embedded software development using C or C++, preferably in automotive environments.
+    Knowledge of AUTOSAR (BSW and application layer) and automotive communication protocols (CAN, LIN, Ethernet, UDS).
+    Hands-on experience with GIT and requirements management tools such as IBM Rational DOORS.
+    Strong analytical, problem-solving, and communication skills in cross-functional settings.
+    Bachelor’s degree in Electronics, Electrical, Computer Engineering, or a related field.
+    You should be living in Querétaro or willing to relocate: this is an on-site position on a hybrid scheme. 
+
+Nice to have: Experience with AUTOSAR configuration tools (EB Tresos, Vector DaVinci), Embedded Linux/Yocto, QNX, or Hypervisor environments.
+
+WHAT YOU’LL LOVE ABOUT WORKING HERE?
+
+    Capgemini Employer Promise: Learning + Flexibility + Team Spirit + Inclusion + Innovation.
+    Get competitive benefits above the law.
+    Build your future within a worldwide leader in ER&D projects.
+    Feel free to grow within different industries and choose your career path.
+    Be part of a great family of Engineers, and people all over Mexico and the world.
+
+About Capgemini
+
+Capgemini is a global leader in partnering with companies to transform and manage their business by harnessing the power of technology. The Group is guided everyday by its purpose of unleashing human energy through technology for an inclusive and sustainable future. It is a responsible and diverse organization of over 300,000 team members in nearly 50 countries. With its strong 50-year heritage and deep industry expertise, Capgemini is trusted by its clients to address the entire breadth of their business needs, from strategy and design to operations, fueled by the fast evolving and innovative world of cloud, data, AI, connectivity, software, digital engineering and platforms.
+
+At Capgemini Mexico, we aim to attract the best talent and are committed to creating a diverse and inclusive work environment, so there is no discrimination based on race, sex, sexual orientation, gender identity or expression, or any other characteristic of a person. All applications welcome and will be considered based on merit against the job and/or experience for the position.
+
+Job Description
+
+Works in the area of Software Engineering, which encompasses the development, maintenance and optimization of software solutions/applications.1. Applies scientific methods to analyse and solve software engineering problems.2. He/she is responsible for the development and application of software engineering practice and knowledge, in research, design, development and maintenance.3. His/her work requires the exercise of original thought and judgement and the ability to supervise the technical and administrative work of other software engineers.4. The software engineer builds skills and expertise of his/her software engineering discipline to reach standard software engineer skills expectations for the applicable role, as defined in Professional Communities.5. The software engineer collaborates and acts as team player with other software engineers and stakeholders.
