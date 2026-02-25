@@ -1,10 +1,20 @@
 import subprocess
 import os
+from ats_scorer import *
+import textwrap
+from typing import List
 
-RESUME_PATH = "assets/resume.txt"
-JOB_POSITION_PATH = "assets/job_position.txt"
-ASSETS_PATH = "assets/"
-
+class Color:
+    PURPLE = '\033[1;35;48m'
+    CYAN = '\033[1;36;48m'
+    BOLD = '\033[1;37;48m'
+    BLUE = '\033[1;34;48m'
+    GREEN = '\033[1;32;48m'
+    YELLOW = '\033[1;33;48m'
+    RED = '\033[1;31;48m'
+    BLACK = '\033[1;30;48m'
+    UNDERLINE = '\033[4;37;48m'
+    END = '\033[1;37;0m' # Reset code is important
 
 def printWelcomeMessage():
     _clear_screen()
@@ -19,13 +29,14 @@ def printWelcomeMessage():
           "║ POSITION USING AI. YOU CAN GET THE ATS SCORE, ADD PERSONAL PROJECT EXPERIENCE    ║\n"\
           "║ AND REWRITE YOUR RESUME TO INCREASE YOUR ATS SCORE.                              ║\n"\
           "╠══════════════════════════════════════════════════════════════════════════════════╝")
-    input("╚ ENTER ANY KEY TO CONTINUE: ")
+    input("╚ PRESS ENTER TO CONTINUE: ")
     _clear_screen()
 
 def confirmResumeExists():
   # Check if the file exists
   if not os.path.exists(RESUME_PATH):
-    os.makedirs(ASSETS_PATH, exist_ok=True)
+    #Create assets directory but don't throw error if it already exists
+    os.makedirs(ASSETS_PATH, exist_ok = True)
     #Create file but don't write anything
     with open(RESUME_PATH, "w") as f:
       pass
@@ -33,11 +44,20 @@ def confirmResumeExists():
           "║ IT APPEARS YOU DON'T HAVE A RESUME. A WINDOW WILL OPEN,   ║\n" \
           "║ PLEASE WRITE YOUR RESUME TO CONTINUE.                     ║\n" \
           "╠═══════════════════════════════════════════════════════════╝\n" \
-          "╚ ENTER ANY KEY TO CONTINUE: ")
+          "╚ PRESS ENTER TO CONTINUE: ")
     # Python script waits here until Notepad is closed
     process = subprocess.Popen(['notepad.exe', RESUME_PATH])
     process.wait()
-  return _check_there_are_contents(RESUME_PATH)
+  try:
+    return _check_there_are_contents(RESUME_PATH)
+  except UnicodeDecodeError:
+    print(f"{Color.RED}" \
+          "╔═══════════════════════════════════════════════════════════╗\n" \
+          "║ THE RESUME TEXT IS NOT ENCODED AS UTF-8                   ║\n" \
+          "╚═══════════════════════════════════════════════════════════╝" \
+          f"{Color.END}")
+    os.remove(RESUME_PATH)
+    return False
 
 def confirmJobPostulationExists():
   # Check if the file exists
@@ -50,11 +70,20 @@ def confirmJobPostulationExists():
           "║ A WINDOW WILL OPEN, PLEASE COPY A JOB POSITION TO         ║\n" \
           "║ CONTINUE.                                                 ║\n" \
           "╠═══════════════════════════════════════════════════════════╝\n" \
-          "╚ ENTER ANY KEY TO CONTINUE: ")
+          "╚ PRESS ENTER TO CONTINUE: ")
     # Python script waits here until Notepad is closed
     process = subprocess.Popen(['notepad.exe', JOB_POSITION_PATH])
     process.wait()
-  return _check_there_are_contents(JOB_POSITION_PATH)
+  try:
+    return _check_there_are_contents(JOB_POSITION_PATH)
+  except UnicodeDecodeError:
+    print(f"{Color.RED}" \
+          "╔═══════════════════════════════════════════════════════════╗\n" \
+          "║ THE JOB POSITION TEXT IS NOT ENCODED AS UTF-8             ║\n" \
+          "╚═══════════════════════════════════════════════════════════╝" \
+          f"{Color.END}")
+    os.remove(JOB_POSITION_PATH)
+    return False
 
 def printOptionsCLI():
     _clear_screen()
@@ -69,7 +98,22 @@ def printOptionsCLI():
           "╠═══════════════════════════════════════════════════════════╝")
 
 def run_ats_analyzer():
-  pass
+  analysisResult, action = analyze_resume_and_get_score()
+
+  print( "╠═══════════════════════════════════════════════════════════╗\n" \
+        f"║{(' ATS SCORE: '+ str(analysisResult.overall_score)).ljust(59)}║")
+  _print_analysis_text_wrapped("STRONG MATCHES", analysisResult.strong_matches)
+  _print_analysis_text_wrapped("WEAK AREAS", analysisResult.weak_areas)
+  _print_analysis_text_wrapped("MISSING REQUIRED SKILLS", analysisResult.missing_required_skills)
+  print( "║ SUMMARY:                                                  ║")
+  wrappedLines = textwrap.wrap(analysisResult.summary, width=57)
+  for line in wrappedLines:
+    print('║', line.ljust(57), '║')
+  print(f"║{' '*59}║\n"\
+        f"║{(" ACTION: " + action).ljust(59)}║\n" \
+          "╠═══════════════════════════════════════════════════════════╝")
+
+  input("╚ PRESS ENTER TO CONTINUE")
 
 def add_another_job_position():
   pass
@@ -94,10 +138,20 @@ def _clear_screen():
 
 def _check_there_are_contents(fileToCheck: str):
   thereAreContents = False
-  with open(fileToCheck, "r") as f:
+  with open(fileToCheck, "r", encoding="UTF-8") as f:
       if not f.read(1):
           thereAreContents = False
       else:
           thereAreContents = True
   if thereAreContents is False : os.remove(fileToCheck)
   return thereAreContents
+
+def _print_analysis_text_wrapped(analysisCategory: str, analysisStrLis: List[str]):
+  print(f"║ {(analysisCategory + ": ").ljust(58)}║")
+  for match in analysisStrLis:
+    wrappedLines = textwrap.wrap(match, width=56)
+    for wrappedLine in wrappedLines:
+        if wrappedLine == wrappedLines[0]:
+          print("║ -", wrappedLine.ljust(55), "║")
+        else:
+          print("║  ", wrappedLine.ljust(55), "║")
