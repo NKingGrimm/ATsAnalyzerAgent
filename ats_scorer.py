@@ -79,9 +79,9 @@ def score_resume_against_job(job_description: str, resume_description: str) -> A
     return enforce_balanced_rules(ats_result)
 
 def decide_action(score: int) -> str:
-    if score >= 80:
+    if score >= 70:
         return "APPLY_AS_IS"
-    elif score >= 70:
+    elif score >= 60:
         return "REWRITE_RESUME"
     else:
         return "SKIP"
