@@ -40,11 +40,13 @@ def confirmResumeExists():
     #Create file but don't write anything
     with open(RESUME_PATH, "w") as f:
       pass
-    input("╔═══════════════════════════════════════════════════════════╗\n" \
+    input(f"{Color.YELLOW}" \
+          "╔═══════════════════════════════════════════════════════════╗\n" \
           "║ IT APPEARS YOU DON'T HAVE A RESUME. A WINDOW WILL OPEN,   ║\n" \
           "║ PLEASE WRITE YOUR RESUME TO CONTINUE.                     ║\n" \
           "╠═══════════════════════════════════════════════════════════╝\n" \
-          "╚ PRESS ENTER TO CONTINUE: ")
+          "╚ PRESS ENTER TO CONTINUE: " \
+          f"{Color.END}")
     # Python script waits here until Notepad is closed
     process = subprocess.Popen(['notepad.exe', RESUME_PATH])
     process.wait()
@@ -65,12 +67,14 @@ def confirmJobPostulationExists():
     #Create file but don't write anything
     with open(JOB_POSITION_PATH, "w") as f:
       pass
-    input("╔═══════════════════════════════════════════════════════════╗\n" \
+    input(f"{Color.YELLOW}"
+          "╔═══════════════════════════════════════════════════════════╗\n" \
           "║ IT APPEARS YOU DON'T HAVE A JOB POSITION.                 ║\n" \
           "║ A WINDOW WILL OPEN, PLEASE COPY A JOB POSITION TO         ║\n" \
           "║ CONTINUE.                                                 ║\n" \
           "╠═══════════════════════════════════════════════════════════╝\n" \
-          "╚ PRESS ENTER TO CONTINUE: ")
+          "╚ PRESS ENTER TO CONTINUE: " \
+          f"{Color.END}")
     # Python script waits here until Notepad is closed
     process = subprocess.Popen(['notepad.exe', JOB_POSITION_PATH])
     process.wait()
@@ -116,10 +120,45 @@ def run_ats_analyzer():
   input("╚ PRESS ENTER TO CONTINUE")
 
 def add_another_job_position():
-  pass
+  deleteCurrentJob = ""
+  while((deleteCurrentJob in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
+    print("╔═══════════════════════════════════════════════════════════╗\n" \
+          "║ ALL CONTENTS IN THE CURRENT POSITION WILL BE DELETED      ║\n" \
+          "╠═══════════════════════════════════════════════════════════╝")
+    deleteCurrentJob = input("╚ DO YOU WISH TO CONTINUE? (Y|N): ")
+  if deleteCurrentJob in ["Y","y","yes","YES","Yes"]:
+    try:
+      os.remove(JOB_POSITION_PATH)
+    except FileNotFoundError:
+      pass
+    except PermissionError:
+      print(f"{Color.RED}" \
+            "╔═══════════════════════════════════════════════════════════╗\n" \
+            "║ PERMISSION DENIED TO DELETE THE FILE.                     ║\n" \
+            "╚═══════════════════════════════════════════════════════════╝" \
+            f"{Color.END}")
 
 def add_personal_project():
-  pass
+  continueWithRequest = ""
+  print("╔═══════════════════════════════════════════════════════════╗\n" \
+        "║ TO ADD A PERSONAL PROJECT YOU HAVE TO PROVIDE A PUBLIC    ║\n" \
+        "║ GITHUB REPOSITORY LINK WITH A README FILE. AN AI AGENT    ║\n" \
+        "║ WILL EXTRACT A SUMMARY AND A LIST OF KEYWORDS TO BE USED  ║\n" \
+        "║ IN CASE YOU WANT TO REWRITE YOUR RESUME TO INCREASE YOUR  ║\n" \
+        "║ ATS SCORE FOR A GIVEN POSITION                            ║\n" \
+        "╠═══════════════════════════════════════════════════════════╝")
+  while((continueWithRequest in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
+    continueWithRequest = input("╚ DO YOU WISH TO CONTINUE? (Y|N): ")
+
+  if continueWithRequest in ["Y","y","yes","YES","Yes"]:
+    githubLink = "INIT TEXT"
+    print("╔═══════════════════════════════════════════════════════════╗\n" \
+          "║ ADD YOUR GITHUB LINK, NOTE THAT IT SHOULD HAVE A FORMAT   ║\n" \
+          "║ AS FOLLOWS: github.com/user/repository                    ║\n" \
+          "╠═══════════════════════════════════════════════════════════╝")
+    while(githubLink != ""):
+      githubLink = input("╚ ENTER YOUR REPO LINK (ENTER AN EMPTY LINE TO FINISH):  ")
+      # Check githubt link for syntax errors
 
 def rewrite_resume():
   pass

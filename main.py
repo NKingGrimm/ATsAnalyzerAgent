@@ -3,13 +3,16 @@ from CLI import *
 
 def mainCLI():
     printWelcomeMessage()
-    existsResume = False
-    while(existsResume is False):
-        existsResume = confirmResumeExists()
-    existsJobPostulation = False
-    while(existsJobPostulation is False):
-        existsJobPostulation = confirmJobPostulationExists()
     while(True):
+        #Check the necessary material exists
+        existsResume = False
+        while(existsResume is False):
+            existsResume = confirmResumeExists()
+        existsJobPostulation = False
+        while(existsJobPostulation is False):
+            existsJobPostulation = confirmJobPostulationExists()
+
+        #Print menu
         printOptionsCLI()
         option = input("╠ ENTER YOUR CHOICE: ")
         match option:
