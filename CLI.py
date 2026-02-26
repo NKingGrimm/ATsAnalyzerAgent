@@ -3,6 +3,8 @@ import os
 from ats_scorer import *
 import textwrap
 from typing import List
+from github_handler import  verify_github_link_validity,\
+                            retrieve_github_information
 
 class Color:
     PURPLE = '\033[1;35;48m'
@@ -151,14 +153,28 @@ def add_personal_project():
     continueWithRequest = input("╚ DO YOU WISH TO CONTINUE? (Y|N): ")
 
   if continueWithRequest in ["Y","y","yes","YES","Yes"]:
-    githubLink = "INIT TEXT"
+    githubLink = "NOT EMPTY"
+    gitHubLinksCollection = list()
     print("╔═══════════════════════════════════════════════════════════╗\n" \
           "║ ADD YOUR GITHUB LINK, NOTE THAT IT SHOULD HAVE A FORMAT   ║\n" \
           "║ AS FOLLOWS: github.com/user/repository                    ║\n" \
           "╠═══════════════════════════════════════════════════════════╝")
     while(githubLink != ""):
       githubLink = input("╚ ENTER YOUR REPO LINK (ENTER AN EMPTY LINE TO FINISH):  ")
-      # Check githubt link for syntax errors
+      linkIsValid = verify_github_link_validity(githubLink)
+      if githubLink == "":
+        break
+      if linkIsValid:
+        gitHubLinksCollection.append(githubLink)
+      else:
+        print(f"{Color.YELLOW}" \
+              "╔═══════════════════════════════════════════════════════════╗\n" \
+              "║ LINK INVALID                                              ║\n" \
+              "╠═══════════════════════════════════════════════════════════╝" \
+              f"{Color.END}" )
+    gitHubValidReadMeFileLinks =  retrieve_github_information(set(gitHubLinksCollection))
+    #Send valid links to AI
+
 
 def rewrite_resume():
   pass
