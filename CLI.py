@@ -4,7 +4,7 @@ from ats_scorer import *
 import textwrap
 from typing import List
 from github_handler import  verify_github_link_validity,\
-                            retrieve_github_information
+                            retrieve_github_api_links
 
 class Color:
     PURPLE = '\033[1;35;48m'
@@ -160,7 +160,7 @@ def add_personal_project():
           "║ AS FOLLOWS: github.com/user/repository                    ║\n" \
           "╠═══════════════════════════════════════════════════════════╝")
     while(githubLink != ""):
-      githubLink = input("╚ ENTER YOUR REPO LINK (ENTER AN EMPTY LINE TO FINISH):  ")
+      githubLink = input("╚ ENTER YOUR REPO LINK (ENTER AN EMPTY LINE TO FINISH): ")
       linkIsValid = verify_github_link_validity(githubLink)
       if githubLink == "":
         break
@@ -172,8 +172,19 @@ def add_personal_project():
               "║ LINK INVALID                                              ║\n" \
               "╠═══════════════════════════════════════════════════════════╝" \
               f"{Color.END}" )
-    gitHubValidReadMeFileLinks =  retrieve_github_information(set(gitHubLinksCollection))
-    #Send valid links to AI
+    gitHubValidContentLinks, error = retrieve_github_api_links(gitHubLinksCollection)
+    if error:
+      print(f"{Color.RED}" \
+              "╔═══════════════════════════════════════════════════════════╗\n" \
+            f"║ {error}\n" \
+              "╠═══════════════════════════════════════════════════════════╝" \
+            f"{Color.END}" )
+
+    for repo in gitHubValidContentLinks:
+      if type(gitHubValidContentLinks[repo]) == tuple:
+        defaultRepoBranch = gitHubValidContentLinks[repo][0]
+        readmeFileName = gitHubValidContentLinks[repo][1]
+        projectSummary = get_project_summary_and_keywords(repo, defaultRepoBranch, readmeFileName)
 
 
 def rewrite_resume():

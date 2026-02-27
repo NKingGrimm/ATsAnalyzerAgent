@@ -21,3 +21,7 @@ class RewrittenResumeSections(BaseModel):
     summary: str
     hard_skills: List[str]
     projects: Dict[str, List[str]]
+
+class PersonalProjectInfo(BaseModel):
+    summary: str
+    keywords: List[str]

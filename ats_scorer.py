@@ -1,8 +1,8 @@
 import json
 import ollama
-from schemas import ATSResult, ResumeFacts, RewrittenResumeSections
+from schemas import ATSResult, ResumeFacts, RewrittenResumeSections, PersonalProjectInfo
 from prompts import *
-
+from github_handler import get_github_readme_text
 MAX_SCORES = {
     "core_requirements": 35,
     "role_relevance": 15,
@@ -145,6 +145,29 @@ def analyze_resume_and_get_score():
     action = _decide_action(result.overall_score)
     return result, action
 
+def get_project_summary_and_keywords(repository: str, defaultMainBranch: str, readmeFileName: str):
+    readmeText, e = get_github_readme_text(repository, defaultMainBranch, readmeFileName)
+    prompt = GITHUB_PROJECT_PROMPT.format(
+        readme_text = readmeText
+    )
+
+    response = ollama.chat(
+        model="llama3.1:8b",
+        messages=[
+            {"role": "system", "content": GITHUB_PROJECT_SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ],
+        format="json"  # CRITICAL
+    )
+
+    try:
+        raw = json.loads(response["message"]["content"])
+        #FIXME: It is possible that the agen returns a float value for the overal_score
+        projectSummary = PersonalProjectInfo(**raw)
+    except Exception as e:
+        raise RuntimeError("Invalid JSON returned by Llama") from e
+
+    return projectSummary
 # def validate_no_new_skills(original_facts, rewritten_text):
 #     for skill in rewritten_text.split():
 #         if skill in SUSPICIOUS_SKILLS and skill not in original_facts["skills"]:

@@ -133,3 +133,48 @@ Extract and return in JSON format.
 RESUME:
 {resume_description}
 """
+
+GITHUB_PROJECT_SYSTEM_PROMPT = """
+
+Your task is to analyze a software project README file and extract:
+1. A concise professional summary suitable for a CV
+2. A list of relevant technical keywords
+
+CRITICAL RULES:
+- Base your output ONLY on information explicitly present in the README.
+- Do NOT invent or infer missing details.
+- If the README is unclear, incomplete, contradictory, or non-technical, you MUST say so.
+- If meaningful extraction is not possible, return an empty summary and an empty keyword list.
+- Keep summaries short (2–4 sentences) when possible.
+- Keywords must be concrete and CV-relevant (technologies, tools, standards, domains).
+- Exclude vague or generic words.
+- Normalize well-known technology names.
+- Return VALID JSON ONLY.
+- Do not include explanations outside JSON.
+"""
+
+GITHUB_PROJECT_PROMPT = """
+TASK:
+1. Determine whether the README contains enough clear technical information to describe the project.
+2. If yes:
+   - Write a concise professional summary of the project for use in a CV.
+   - Extract a list of keywords that describe:
+    - Programming languages
+    - Frameworks or libraries
+    - Tools
+    - Protocols or standards
+    - Platforms or environments
+    - Technical domains (if explicitly stated)
+3. If no:
+   - Return an empty summary string.
+   - Return an empty keyword list.
+
+Return JSON matching this schema exactly:
+
+class PersonalProjectInfo(BaseModel):
+    summary: str
+    keywords: List[str]
+
+PROJECT README:
+{readme_text}
+"""
