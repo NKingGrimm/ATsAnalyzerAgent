@@ -1,5 +1,15 @@
-from ats_scorer import *
-from CLI import *
+from CLI import (
+    Color,
+    add_another_job_position,
+    add_personal_project,
+    confirmJobPostulationExists,
+    confirmResumeExists,
+    edit_resume,
+    printOptionsCLI,
+    printWelcomeMessage,
+    rewrite_resume,
+    run_ats_analyzer,
+)
 
 def mainCLI():
     printWelcomeMessage()

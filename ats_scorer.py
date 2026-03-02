@@ -3,7 +3,16 @@ import ollama
 
 from storage import get_file_contents
 from schemas import ATSResult, ResumeFacts, RewrittenResumeSections, PersonalProjectInfo
-from prompts import *
+from prompts import (
+    FACT_EXTRACTION_PROMPT,
+    FACT_EXTRACTION_SYSTEM_PROMPT,
+    GITHUB_PROJECT_PROMPT,
+    GITHUB_PROJECT_SYSTEM_PROMPT,
+    REWRITE_PROMPT_TEMPLATE,
+    REWRITE_SYSTEM_PROMPT,
+    SYSTEM_PROMPT,
+    USER_PROMPT_TEMPLATE,
+)
 from github_handler import get_github_readme_text
 MAX_SCORES = {
     "core_requirements": 35,
@@ -96,7 +105,7 @@ def _rewrite_resume(
     allowed_facts: dict,
     weak_areas: list,
     missing_skills: list
-) -> str:
+) -> RewrittenResumeSections:
 
     # extractedFacts = fact_extraction_from_resume(resume_description)
     #     if action == "REWRITE_RESUME":
@@ -120,12 +129,18 @@ def _rewrite_resume(
         messages=[
             {"role": "system", "content": REWRITE_SYSTEM_PROMPT},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        format="json"
     )
 
     try:
         raw = json.loads(response["message"]["content"])
+        if raw.get("refusal"):
+            reason = raw.get("reason", "Insufficient factual support")
+            raise RuntimeError(f"RESUME REWRITE REFUSED: {reason}")
         rewrite_result = RewrittenResumeSections(**raw)
+    except RuntimeError:
+        raise
     except Exception as e:
         raise RuntimeError("Invalid JSON returned by Llama") from e
     # # Refusal handling
@@ -144,6 +159,9 @@ def analyze_resume_and_get_score():
 
 def get_project_summary_and_keywords(repository: str, defaultMainBranch: str, readmeFileName: str):
     readmeText, e = get_github_readme_text(repository, defaultMainBranch, readmeFileName)
+    if e:
+        raise RuntimeError(e)
+
     prompt = GITHUB_PROJECT_PROMPT.format(
         readme_text = readmeText
     )
@@ -159,7 +177,6 @@ def get_project_summary_and_keywords(repository: str, defaultMainBranch: str, re
 
     try:
         raw = json.loads(response["message"]["content"])
-        #FIXME: It is possible that the agen returns a float value for the overal_score
         projectSummary = PersonalProjectInfo(**raw)
     except Exception as e:
         raise RuntimeError("Invalid JSON returned by Llama") from e

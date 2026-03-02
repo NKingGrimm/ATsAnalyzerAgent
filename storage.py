@@ -6,50 +6,42 @@ ASSETS_PATH = "assets/"
 RESUME_PATH = ASSETS_PATH + "resume.txt"
 JOB_POSITION_PATH = ASSETS_PATH + "job_position.txt"
 GITHUB_REPOS_PATH = ASSETS_PATH + "github_repos.json"
+FILE_PATHS = {
+  "RESUME": RESUME_PATH,
+  "JOB_POSITION": JOB_POSITION_PATH,
+  "GITHUB_REPOS": GITHUB_REPOS_PATH,
+}
+
+def _resolve_file_path(fileKey: str) -> str:
+  try:
+    return FILE_PATHS[fileKey]
+  except KeyError as e:
+    raise ValueError(f"UNKNOWN FILE KEY: {fileKey}") from e
 
 def check_file_exists(fileToCheck) -> bool:
-  if fileToCheck == "RESUME":
-    return _utility_check_file_exists(RESUME_PATH)
-  elif fileToCheck == "JOB_POSITION":
-    return _utility_check_file_exists(JOB_POSITION_PATH)
-  elif fileToCheck == "GITHUB_REPOS":
-    return _utility_check_file_exists(GITHUB_REPOS_PATH)
+  return _utility_check_file_exists(_resolve_file_path(fileToCheck))
 
 def edit_stored_resume():
   _utility_edit_file(RESUME_PATH)
 
 def create_file(fileToCreate: str):
+  targetPath = _resolve_file_path(fileToCreate)
+  _utility_create_file(targetPath)
   if fileToCreate == "RESUME":
-    _utility_create_file(RESUME_PATH)
     edit_stored_resume()
   elif fileToCreate == "JOB_POSITION":
-    _utility_create_file(JOB_POSITION_PATH)
-    _utility_edit_file(JOB_POSITION_PATH)
-  elif fileToCreate == "GITHUB_REPOS":
-    _utility_create_file(GITHUB_REPOS_PATH)
+    _utility_edit_file(targetPath)
 
 def check_there_are_file_contents(fileToCheck):
-  if fileToCheck == "RESUME":
-    return _utility_confirm_contents_existance(RESUME_PATH)
-  elif fileToCheck == "JOB_POSITION":
-    return _utility_confirm_contents_existance(JOB_POSITION_PATH)
+  return _utility_confirm_contents_existance(_resolve_file_path(fileToCheck))
 
 def delete_file(fileToDelete: str):
-  if fileToDelete == "RESUME":
-    _utility_delete_file(RESUME_PATH)
-  elif fileToDelete == "JOB_POSITION":
-    _utility_delete_file(JOB_POSITION_PATH)
+  _utility_delete_file(_resolve_file_path(fileToDelete))
 
 def get_file_contents(fileToRead: str) -> str:
-  if fileToRead == "RESUME":
-    f = open(RESUME_PATH, "r", encoding="utf-8")
-  elif fileToRead == "JOB_POSITION":
-    f = open(JOB_POSITION_PATH, "r", encoding="utf-8")
-  elif fileToRead == "GITHUB_REPOS":
-    f = open(GITHUB_REPOS_PATH, "r", encoding="utf-8")
-  else:
-    return ""
-  return f.read()
+  targetPath = _resolve_file_path(fileToRead)
+  with open(targetPath, "r", encoding="utf-8") as f:
+    return f.read()
 
 def add_repo_info_to_storage(reposDict: dict):
   if(reposDict):
@@ -74,7 +66,7 @@ def _utility_delete_file(fileToDelete: str):
 
 def _utility_create_file(fileToCreate: str):
   os.makedirs(ASSETS_PATH, exist_ok = True)
-  with open(fileToCreate, "w") as f:
+  with open(fileToCreate, "w", encoding="utf-8") as f:
     pass
 
 def _utility_check_file_exists(filePath: str) -> bool:

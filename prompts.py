@@ -145,7 +145,7 @@ CRITICAL RULES:
 - Do NOT invent or infer missing details.
 - If the README is unclear, incomplete, contradictory, or non-technical, you MUST say so.
 - If meaningful extraction is not possible, return an empty summary and an empty keyword list.
-- Keep summaries short (2–4 sentences) when possible.
+- Keep summaries short (2-4 sentences) when possible.
 - Keywords must be concrete and CV-relevant (technologies, tools, standards, domains).
 - Exclude vague or generic words.
 - Normalize well-known technology names.
@@ -178,3 +178,4 @@ class PersonalProjectInfo(BaseModel):
 PROJECT README:
 {readme_text}
 """
+

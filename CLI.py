@@ -1,8 +1,9 @@
 import subprocess
 import textwrap
+import json
 from typing import List
 
-from ats_scorer import *
+from ats_scorer import analyze_resume_and_get_score, get_project_summary_and_keywords
 
 from github_handler import  verify_github_link_validity,\
                             retrieve_github_api_links
@@ -32,6 +33,9 @@ BOX_LENGTH = 78
     before it touches the box length """
 TEXT_BOX_LENGTH = BOX_LENGTH - 2
 COLOR_SEQUENCE_LEN = len(Color.END)
+VALID_YES = {"Y", "y", "yes", "YES", "Yes"}
+VALID_NO = {"N", "n", "no", "NO", "No"}
+VALID_YES_NO = VALID_YES | VALID_NO
 
 def printWelcomeMessage():
     _utility_clear_screen()
@@ -62,15 +66,12 @@ def printOptionsCLI():
     print(f"╚{"═"*BOX_LENGTH}╝")
 
 def confirmResumeExists():
-  continueWithRequest = ""
-
   resumeExists = check_file_exists("RESUME")
   if not resumeExists:
     _utility_print_warning( "IT APPEARS YOU DON'T HAVE A RESUME. A WINDOW " \
                             "WILL OPEN, PLEASE WRITE YOUR RESUME TO CONTINUE.")
-    while((continueWithRequest in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
-      continueWithRequest = input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
-    if continueWithRequest in ["Y","y","yes","YES","Yes"]:
+    continueWithRequest = _utility_get_yes_no_input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
+    if continueWithRequest in VALID_YES:
       create_file("RESUME")
       resumeHasContents = check_there_are_file_contents("RESUME")
       if not resumeHasContents:
@@ -83,16 +84,13 @@ def confirmResumeExists():
   return True
 
 def confirmJobPostulationExists():
-  continueWithRequest = ""
-
   jobPositionExists = check_file_exists("JOB_POSITION")
   if not jobPositionExists:
     _utility_print_warning( "IT APPEARS YOU DON'T HAVE A JOB POSITION. " \
                             "A WINDOW WILL OPEN, PLEASE COPY A JOB " \
                             "POSITION TO CONTINUE.")
-    while((continueWithRequest in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
-      continueWithRequest = input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
-    if continueWithRequest in ["Y","y","yes","YES","Yes"]:
+    continueWithRequest = _utility_get_yes_no_input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
+    if continueWithRequest in VALID_YES:
       create_file("JOB_POSITION")
       jobPositionHasContents = check_there_are_file_contents("JOB_POSITION")
       if not jobPositionHasContents:
@@ -106,7 +104,13 @@ def confirmJobPostulationExists():
 
 def run_ats_analyzer():
   colorSequenceLen = len(Color.BLUE) + len(Color.END)
-  analysisResult, action = analyze_resume_and_get_score()
+  try:
+    analysisResult, action = analyze_resume_and_get_score()
+  except Exception as e:
+    _utility_print_error("FAILED TO RUN ATS ANALYSIS: " + str(e))
+    input(">>> PRESS ENTER TO CONTINUE")
+    return
+
   if(action == "APPLY_AS_IS"):
     coloredAction = f"{Color.GREEN + action+ Color.END}"
   elif(action == "REWRITE_RESUME"):
@@ -130,11 +134,9 @@ def run_ats_analyzer():
   input(">>> PRESS ENTER TO CONTINUE")
 
 def add_another_job_position():
-  deleteCurrentJob = ""
-  while((deleteCurrentJob in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
-    _utility_print_warning("ALL CONTENTS IN THE CURRENT POSITION WILL BE DELETED")
-    deleteCurrentJob = input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
-  if deleteCurrentJob in ["Y","y","yes","YES","Yes"]:
+  _utility_print_warning("ALL CONTENTS IN THE CURRENT POSITION WILL BE DELETED")
+  deleteCurrentJob = _utility_get_yes_no_input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
+  if deleteCurrentJob in VALID_YES:
     try:
       delete_file("JOB_POSITION")
     except FileNotFoundError:
@@ -142,19 +144,17 @@ def add_another_job_position():
     except PermissionError:
       _utility_print_error("PERMISSION DENIED TO DELETE, THE FILE MIGHT BE IN USE.")
     except OSError as e:
-      _utility_print_error("AN UNEXPECTED OS ERROR OCCURRED: " + e)
+      _utility_print_error("AN UNEXPECTED OS ERROR OCCURRED: " + str(e))
 
 def add_personal_project():
-  continueWithRequest = ""
   _utility_print_message( "TO ADD A PERSONAL PROJECT YOU HAVE TO PROVIDE A PUBLIC GITHUB " \
                           "REPOSITORY LINK WITH A README FILE. AN AI AGENT WILL EXTRACT A " \
                           "SUMMARY AND A LIST OF KEYWORDS TO BE USED IN CASE YOU WANT TO " \
                           "REWRITE YOUR RESUME TO INCREASE YOUR ATS SCORE FOR A GIVEN " \
                           "POSITION", True)
-  while((continueWithRequest in ["Y","y","yes","YES","Yes","N","n","no","NO","No"]) is False):
-    continueWithRequest = input(">>> DO YOU WISH TO CONTINUE? (Y|N): ")
+  continueWithRequest = _utility_get_yes_no_input(">>> DO YOU WISH TO CONTINUE? (Y|N): ")
 
-  if continueWithRequest in ["Y","y","yes","YES","Yes"]:
+  if continueWithRequest in VALID_YES:
     githubLink = "NOT EMPTY"
     gitHubLinksCollection = list()
     _utility_print_message( "ADD YOUR GITHUB LINK, NOTE THAT IT SHOULD HAVE A FORMAT AS " \
@@ -175,6 +175,8 @@ def add_personal_project():
       gitHubValidContentLinks, error = retrieve_github_api_links(gitHubLinksCollection)
       if error:
         _utility_print_error(error)
+        input(f"{Color.RED}>>> PRESS ENTER TO CONTINUE{Color.END}")
+        return
 
       reposInfoJSON = dict()
       reposFileExists = check_file_exists("GITHUB_REPOS")
@@ -192,10 +194,14 @@ def add_personal_project():
         # It only has a tuple type when retrieve_github_api_links found a default branch
         # AND a README file, otherwise the type will be just string with the found default
         # branch
-        if type(gitHubValidContentLinks[repo]) == tuple:
+        if isinstance(gitHubValidContentLinks[repo], tuple):
           defaultRepoBranch = gitHubValidContentLinks[repo][0]
           readmeFileName = gitHubValidContentLinks[repo][1]
-          projectSummary = get_project_summary_and_keywords(repo, defaultRepoBranch, readmeFileName)
+          try:
+            projectSummary = get_project_summary_and_keywords(repo, defaultRepoBranch, readmeFileName)
+          except RuntimeError as e:
+            _utility_print_error(str(e))
+            continue
           # If there is a valid summary
           if(projectSummary.summary):
             repoName = repo.replace("https://api.github.com/repos/", "")
@@ -214,11 +220,11 @@ def rewrite_resume():
 def edit_resume():
   resumeExists = check_file_exists("RESUME")
   if(resumeExists):
-    _utility_print_warning("A WINODW WITH YOUR RESUME WILL POP OPEN, SAVE AND CLOSE IT.")
+    _utility_print_warning("A WINDOW WITH YOUR RESUME WILL POP OPEN, SAVE AND CLOSE IT.")
     input(f"{Color.YELLOW}>>>PRESS ENTER TO CONTINUE: {Color.END}")
     edit_stored_resume()
   else:
-    _utility_print_warning("YOU DONT HAVE A RESUME TO EDIT.")
+    _utility_print_warning("YOU DON'T HAVE A RESUME TO EDIT.")
 
 """
 ============================= UTILITY FUNCTIONS ========================================
@@ -247,7 +253,13 @@ def _utility_wrap_text(textToWrap: str) -> list[str]:
   return textwrap.wrap(textToWrap, width=TEXT_BOX_LENGTH)
 
 def _utility_clear_screen():
-    subprocess.run(['cls'], shell=True, check=True)
+    subprocess.run("cls", shell=True, check=False)
+
+def _utility_get_yes_no_input(message: str) -> str:
+  answer = ""
+  while answer not in VALID_YES_NO:
+    answer = input(message)
+  return answer
 
 def _utility_print_analysis_text_wrapped(analysisCategory: str, analysisStrLis: List[str]):
   print(f"║ {(analysisCategory + ": ").ljust(58)}║")
