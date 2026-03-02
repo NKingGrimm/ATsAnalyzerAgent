@@ -1,5 +1,7 @@
 import json
 import ollama
+
+from storage import get_file_contents
 from schemas import ATSResult, ResumeFacts, RewrittenResumeSections, PersonalProjectInfo
 from prompts import *
 from github_handler import get_github_readme_text
@@ -11,9 +13,6 @@ MAX_SCORES = {
     "keywords_phrasing": 10,
     "clarity_structure": 10,
 }
-ASSETS_PATH = "assets/"
-RESUME_PATH = ASSETS_PATH + "resume.txt"
-JOB_POSITION_PATH = ASSETS_PATH + "job_position.txt"
 
 def _fact_extraction_from_resume(resume: str) -> ResumeFacts:
     prompt = FACT_EXTRACTION_PROMPT.format(
@@ -75,7 +74,8 @@ def _score_resume_against_job(job_description: str, resume_description: str) -> 
 
     try:
         raw = json.loads(response["message"]["content"])
-        #FIXME: It is possible that the agen returns a float value for the overal_score
+        # Sometimes the agent returns float values, if that happens we drop the decimal part
+        raw['overall_score'] = int(raw['overall_score'])
         ats_result = ATSResult(**raw)
     except Exception as e:
         raise RuntimeError("Invalid JSON returned by Llama") from e
@@ -135,11 +135,8 @@ def _rewrite_resume(
     return rewrite_result
 
 def analyze_resume_and_get_score():
-    with open(JOB_POSITION_PATH, "r", encoding="utf-8") as f:
-        job_description = f.read()
-
-    with open(RESUME_PATH, "r", encoding="utf-8") as f:
-        resume_description = f.read()
+    job_description = get_file_contents("JOB_POSITION")
+    resume_description = get_file_contents("RESUME")
 
     result = _score_resume_against_job(job_description, resume_description)
     action = _decide_action(result.overall_score)
