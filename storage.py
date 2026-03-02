@@ -15,10 +15,13 @@ def check_file_exists(fileToCheck) -> bool:
   elif fileToCheck == "GITHUB_REPOS":
     return _utility_check_file_exists(GITHUB_REPOS_PATH)
 
+def edit_stored_resume():
+  _utility_edit_file(RESUME_PATH)
+
 def create_file(fileToCreate: str):
   if fileToCreate == "RESUME":
     _utility_create_file(RESUME_PATH)
-    _utility_edit_file(RESUME_PATH)
+    edit_resume()
   elif fileToCreate == "JOB_POSITION":
     _utility_create_file(JOB_POSITION_PATH)
     _utility_edit_file(JOB_POSITION_PATH)

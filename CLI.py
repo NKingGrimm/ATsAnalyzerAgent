@@ -11,7 +11,8 @@ from storage import check_file_exists,\
                     check_there_are_file_contents,\
                     delete_file,\
                     add_repo_info_to_storage,\
-                    get_repo_info_from_storage
+                    get_repo_info_from_storage,\
+                    edit_stored_resume
 
 class Color:
   PURPLE    = '\033[1;35;48m'
@@ -211,7 +212,13 @@ def rewrite_resume():
   pass
 
 def edit_resume():
-  pass
+  resumeExists = check_file_exists("RESUME")
+  if(resumeExists):
+    _utility_print_warning("A WINODW WITH YOUR RESUME WILL POP OPEN, SAVE AND CLOSE IT.")
+    input(f"{Color.YELLOW}>>>PRESS ENTER TO CONTINUE: {Color.END}")
+    edit_stored_resume()
+  else:
+    _utility_print_warning("YOU DONT HAVE A RESUME TO EDIT.")
 
 """
 ============================= UTILITY FUNCTIONS ========================================
