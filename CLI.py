@@ -61,8 +61,9 @@ def printOptionsCLI():
     _utility_print_message('  2. ADD ANOTHER JOB POSITION', False)
     _utility_print_message('  3. ADD PERSONAL PROJECT', False)
     _utility_print_message('  4. REWRITE RESUME', False)
-    _utility_print_message('  5. EDIT ORIGINAL RESUME', False)
-    _utility_print_message('  6. EXIT', False)
+    _utility_print_message('  5. WRITE A COVER LETTER', False)
+    _utility_print_message('  6. EDIT ORIGINAL RESUME', False)
+    _utility_print_message('  7. EXIT', False)
     print(f"╚{"═"*BOX_LENGTH}╝")
 
 def confirmResumeExists():
@@ -225,6 +226,9 @@ def edit_resume():
     edit_stored_resume()
   else:
     _utility_print_warning("YOU DON'T HAVE A RESUME TO EDIT.")
+
+def write_cover_letter():
+  pass
 
 """
 ============================= UTILITY FUNCTIONS ========================================

@@ -9,6 +9,7 @@ from CLI import (
     printWelcomeMessage,
     rewrite_resume,
     run_ats_analyzer,
+    write_cover_letter
 )
 
 def mainCLI():
@@ -34,8 +35,10 @@ def mainCLI():
                 case "4":
                     rewrite_resume()
                 case "5":
-                    edit_resume()
+                    write_cover_letter()
                 case "6":
+                    edit_resume()
+                case "7":
                     break
                 case _:
                     input(f"\n{Color.YELLOW}>>> PLEASE SELECT A VALID OPTION, PRESS ENTER TO CONTINUE{Color.END}")
