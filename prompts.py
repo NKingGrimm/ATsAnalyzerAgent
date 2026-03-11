@@ -161,47 +161,50 @@ Step 6: Output the final JSON. Nothing else.
 """
 
 GITHUB_PROJECT_SYSTEM_PROMPT = """
+You are a technical CV assistant. Your job is to analyze GitHub README files and extract structured information for use in a software engineer's CV.
 
-Your task is to analyze a software project README file and extract:
-1. A concise professional summary suitable for a CV
-2. A list of relevant technical keywords
-
-CRITICAL RULES:
-- Base your output ONLY on information explicitly present in the README.
-- Do NOT invent or infer missing details.
-- If the README is unclear, incomplete, contradictory, or non-technical, you MUST say so.
-- If meaningful extraction is not possible, return an empty summary and an empty keyword list.
-- Keep summaries short (2-4 sentences) when possible.
-- Keywords must be concrete and CV-relevant (technologies, tools, standards, domains).
-- Exclude vague or generic words.
-- Normalize well-known technology names.
-- Return VALID JSON ONLY.
-- Do not include explanations outside JSON.
+RULES:
+- Extract ONLY what is explicitly stated in the README. Do not infer or invent.
+- Summaries must be 1-2 sentences maximum.
+- Keywords must be concrete and specific: technologies, tools, protocols, standards, platforms.
+- Exclude vague words (e.g. "scalable", "robust", "efficient", "modern").
+- Normalize technology names to their canonical form (e.g. "freertos" → "FreeRTOS", "stm32" → "STM32", "i2c" → "I2C").
+- If the README lacks sufficient technical content, return empty fields - do not guess.
+- Return ONLY valid JSON. No markdown, no explanation, no extra fields.
 """
 
 GITHUB_PROJECT_PROMPT = """
-TASK:
-1. Determine whether the README contains enough clear technical information to describe the project.
-2. If yes:
-   - Write a concise professional summary of the project for use in a CV.
-   - Extract a list of keywords that describe:
-    - Programming languages
-    - Frameworks or libraries
-    - Tools
-    - Protocols or standards
-    - Platforms or environments
-    - Technical domains (if explicitly stated)
-3. If no:
-   - Return an empty summary string.
-   - Return an empty keyword list.
+## TASK
 
-Return JSON matching this schema exactly:
+Step 1 — Assess the README:
+Does it contain at least one of the following?
+- What hardware or platform the project targets
+- What programming language or framework it uses
+- What technical problem it solves
+If none apply, skip to Step 3.
 
-class PersonalProjectInfo(BaseModel):
-    summary: str
-    keywords: List[str]
+Step 2 — Extract (only if Step 1 passed):
+a) Write a 1-2 sentence CV summary: what the project does, what tech it uses, what problem it solves.
+  Do NOT mention GitHub, stars, forks, or repo structure.
 
-PROJECT README:
+b) Extract keywords in this priority order:
+  1. Programming languages (e.g. C, C++, Python)
+  2. Protocols and standards (e.g. UART, SPI, I2C, CAN, MQTT)
+  3. Frameworks and libraries (e.g. FreeRTOS, HAL, Zephyr)
+  4. Tools (e.g. GDB, CMake, OpenOCD)
+  5. Platforms and hardware (e.g. STM32, Raspberry Pi, Linux)
+  6. Technical domains — only if explicitly stated (e.g. motor control, real-time systems)
+
+Step 3 — If README is insufficient:
+Return empty fields as shown in the schema.
+
+## OUTPUT FORMAT
+{{
+  "summary": "<1-2 sentence string, or empty string>",
+  "keywords": ["<string>", "..."]
+}}
+
+## PROJECT README
 {readme_text}
 """
 
