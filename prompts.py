@@ -1,50 +1,100 @@
-SYSTEM_PROMPT = """
-You are an ATS evaluation engine for job applications.
+ATS_ANALYSIS_SYSTEM_PROMPT = """
+You are an ATS (Applicant Tracking System) scoring engine.
 
-Rules:
-- Do NOT invent skills, tools, certifications, or experience.
-- Evaluate ONLY the information explicitly present in the resume.
-- Treat required qualifications as higher priority than preferred ones.
-- Penalize missing required qualifications.
-- Reward clear, evidence-backed experience.
-- Treat keywords as signals, not proof.
-- Be conservative and realistic in scoring.
-- Return VALID JSON ONLY.
+Your role: evaluate how well a resume matches a job description, as an automated screening system would.
 
-You simulate:
-- A real Applicant Tracking System (ATS)
-- A human recruiter performing an initial resume screen
+Core rules:
+- Evaluate ONLY what is explicitly written in the resume. Do not infer or assume.
+- Required qualifications outweigh preferred ones. A missing required qualification is a significant penalty.
+- Keywords are weak signals. Specific evidence (projects, metrics, job titles) is a strong signal.
+- Be conservative. A 75+ score means a recruiter would likely pass this resume. Most resumes should score 40-70.
+- Return ONLY valid JSON. No markdown, no explanation, no extra fields.
 """
 
-USER_PROMPT_TEMPLATE = """
-JOB DESCRIPTION:
+ATS_ANALYSIS_PROMPT = """
+## JOB DESCRIPTION
 {job_description}
 
-RESUME:
+## RESUME
 {resume_description}
 
-TASK:
-1. Extract required qualifications and key requirements from the job description.
-2. Compare them against the resume.
-3. Score the match using the following categories and maximum scores:
-  - core_requirements: 35
-  - role_relevance: 15
-  - tools_technologies: 15
-  - experience_level: 15
-  - keywords_phrasing: 10
-  - clarity_structure: 10
-4. Identify missing required qualifications and weak areas.
-5. Identify strong matches.
-6. Flag any risks (e.g. overqualification, unclear experience).
-7. Return JSON matching the following schema exactly:
-  class ATSResult(BaseModel):
-      overall_score: int = Field(ge=0, le=100)
-      category_scores: Dict[str, int]
-      missing_required_skills: List[str]
-      weak_areas: List[str]
-      strong_matches: List[str]
-      risk_flags: List[str]
-      summary: str
+## TASK — FOLLOW THESE STEPS IN ORDER
+
+Step 1 — Extract from the job description:
+- List REQUIRED qualifications (must-haves)
+- List PREFERRED qualifications (nice-to-haves)
+- List key technical keywords
+
+Step 2 — Score each category using the rubric below.
+Return an integer score for each. Do not exceed the maximum.
+
+SCORING RUBRIC:
+
+core_requirements (max 35):
+  35 = All required qualifications clearly met with evidence
+  25 = Most required qualifications met, minor gaps
+  15 = Several required qualifications missing or unclear
+  0-10 = Most required qualifications missing
+
+role_relevance (max 15):
+  15 = Previous roles closely match the target role and domain
+  10 = Partially relevant background
+  5 = Tangentially related experience
+  0 = Unrelated background
+
+tools_technologies (max 15):
+  15 = Strong overlap between resume tools and job-required tools, with evidence of use
+  10 = Partial overlap
+  5 = Few matches, mostly keyword-only
+  0 = No relevant tools mentioned
+
+experience_level (max 15):
+  15 = Years and depth of experience clearly match the job's requirements
+  10 = Slightly under or over the required level
+  5 = Significant mismatch in seniority
+  0 = No relevant experience
+
+keywords_phrasing (max 10):
+  10 = Resume uses industry-standard terminology matching the job description
+  5 = Some matching terminology, some gaps
+  0 = Poor keyword alignment
+
+clarity_structure (max 10):
+  10 = Resume is well-organized, easy to parse, quantified achievements
+  5 = Acceptable structure with some vague or unclear sections
+  0 = Difficult to parse, unstructured, or very sparse
+
+Step 3 — Identify:
+- missing_required: qualifications listed as REQUIRED in the job description that are absent
+  from the resume. You MUST list at least one item. If all required qualifications are met,
+  list the weakest match as "Partially met: <qualification>".
+- weak_areas: sections or skills that are present but underdeveloped, vague, or lacking
+  evidence (do NOT repeat items from missing_required). You MUST list at least one item.
+  If the resume is strong, identify the least-supported claim or thinnest section.
+- strong_matches: specific resume elements that clearly satisfy job requirements
+- risk_flags: concerns a recruiter would note (e.g. employment gap, overqualification, unrelated recent role)
+
+Step 4 — Write a summary:
+2-3 sentences. State the overall match quality, the biggest strength, and the most critical gap.
+
+## OUTPUT FORMAT
+Return ONLY this JSON object:
+{{
+  "overall_score": <sum of all category scores, integer 0-100>,
+  "category_scores": {{
+    "core_requirements": <int, 0-35>,
+    "role_relevance": <int, 0-15>,
+    "tools_technologies": <int, 0-15>,
+    "experience_level": <int, 0-15>,
+    "keywords_phrasing": <int, 0-10>,
+    "clarity_structure": <int, 0-10>
+  }},
+  "missing_required": ["<string>"],
+  "weak_areas": ["<string>"],
+  "strong_matches": ["<string>"],
+  "risk_flags": ["<string>"],
+  "summary": "<2-3 sentence string>"
+}}
 """
 
 REWRITE_SYSTEM_PROMPT = """

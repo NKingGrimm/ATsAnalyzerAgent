@@ -8,8 +8,8 @@ from prompts import (
     GITHUB_PROJECT_SYSTEM_PROMPT,
     REWRITE_PROMPT_TEMPLATE,
     REWRITE_SYSTEM_PROMPT,
-    SYSTEM_PROMPT,
-    USER_PROMPT_TEMPLATE,
+    ATS_ANALYSIS_SYSTEM_PROMPT,
+    ATS_ANALYSIS_PROMPT
 )
 from github_handler import get_github_readme_text
 MAX_SCORES = {
@@ -32,7 +32,7 @@ def _enforce_balanced_rules(result: ATSResult) -> ATSResult:
     result.overall_score = sum(result.category_scores.values())
 
     # Balanced penalties
-    missing = len(result.missing_required_skills)
+    missing = len(result.missing_required)
     if missing == 1:
         result.overall_score -= 5
     elif missing == 2:
@@ -44,7 +44,7 @@ def _enforce_balanced_rules(result: ATSResult) -> ATSResult:
     return result
 
 def _score_resume_against_job(job_description: str, resume_description: str) -> ATSResult:
-    prompt = USER_PROMPT_TEMPLATE.format(
+    prompt = ATS_ANALYSIS_PROMPT.format(
         job_description = job_description,
         resume_description = resume_description
     )
@@ -52,7 +52,7 @@ def _score_resume_against_job(job_description: str, resume_description: str) -> 
     response = ollama.chat(
         model="llama3.1:8b",
         messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": ATS_ANALYSIS_SYSTEM_PROMPT},
             {"role": "user", "content": prompt}
         ],
         format="json"  # CRITICAL

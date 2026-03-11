@@ -135,7 +135,7 @@ def run_ats_analyzer():
   _utility_print_message(f"{Color.BLUE}WEAK AREAS:{Color.END}", False, colorSequenceLen)
   for area in analysisResult.weak_areas: _utility_print_message(area, False)
   _utility_print_message(f"{Color.BLUE}MISSING REQUIRED SKILLS:{Color.END}", False, colorSequenceLen)
-  for skill in analysisResult.missing_required_skills: _utility_print_message(skill, False)
+  for skill in analysisResult.missing_required: _utility_print_message(skill, False)
   _utility_print_message(f"{Color.BLUE}SUMMARY:{Color.END}", False, colorSequenceLen)
   _utility_print_message(analysisResult.summary, False)
   _utility_print_message(f"{Color.BLUE}ACTION: {Color.END}" + coloredAction, False, (2*colorSequenceLen))
@@ -143,7 +143,7 @@ def run_ats_analyzer():
 
   # Set these variables in order to rewrite the resume
   weakAreas = analysisResult.weak_areas
-  missingSkills = analysisResult.missing_required_skills
+  missingSkills = analysisResult.missing_required
 
   input(">>> PRESS ENTER TO CONTINUE")
 
