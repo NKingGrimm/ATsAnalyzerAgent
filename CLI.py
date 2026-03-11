@@ -3,17 +3,23 @@ import textwrap
 import json
 from typing import List
 
-from ats_scorer import analyze_resume_and_get_score, get_project_summary_and_keywords
+from ats_scorer import (analyze_resume_and_get_score,
+                        get_project_summary_and_keywords,
+                        get_rewritten_sections)
 
-from github_handler import  verify_github_link_validity,\
-                            retrieve_github_api_links
-from storage import check_file_exists,\
-                    create_file,\
-                    check_there_are_file_contents,\
-                    delete_file,\
-                    add_repo_info_to_storage,\
-                    get_repo_info_from_storage,\
-                    edit_stored_resume
+from github_handler import  (verify_github_link_validity,
+                            retrieve_github_api_links)
+from storage import (check_file_exists,
+                    create_file,
+                    check_there_are_file_contents,
+                    delete_file,
+                    add_repo_info_to_storage,
+                    get_repo_info_from_storage,
+                    edit_stored_resume,
+                    get_file_contents)
+
+weakAreas = []
+missingSkills = []
 
 class Color:
   PURPLE    = '\033[1;35;48m'
@@ -60,9 +66,9 @@ def printOptionsCLI():
     _utility_print_message('  1. OBTAIN ATS SCORE AND ANALYSIS', False)
     _utility_print_message('  2. ADD ANOTHER JOB POSITION', False)
     _utility_print_message('  3. ADD PERSONAL PROJECT', False)
-    _utility_print_message('  4. REWRITE RESUME', False)
-    _utility_print_message('  5. WRITE A COVER LETTER', False)
-    _utility_print_message('  6. EDIT ORIGINAL RESUME', False)
+    _utility_print_message('  4. EDIT ORIGINAL RESUME', False)
+    _utility_print_message('  5. REWRITE RESUME', False)
+    _utility_print_message('  6. WRITE A COVER LETTER', False)
     _utility_print_message('  7. EXIT', False)
     print(f"╚{"═"*BOX_LENGTH}╝")
 
@@ -104,6 +110,9 @@ def confirmJobPostulationExists():
   return True
 
 def run_ats_analyzer():
+  global weakAreas
+  global missingSkills
+
   colorSequenceLen = len(Color.BLUE) + len(Color.END)
   try:
     analysisResult, action = analyze_resume_and_get_score()
@@ -132,6 +141,10 @@ def run_ats_analyzer():
   _utility_print_message(f"{Color.BLUE}ACTION: {Color.END}" + coloredAction, False, (2*colorSequenceLen))
   print(f"╚{"═"*BOX_LENGTH}╝")
 
+  # Set these variables in order to rewrite the resume
+  weakAreas = analysisResult.weak_areas
+  missingSkills = analysisResult.missing_required_skills
+
   input(">>> PRESS ENTER TO CONTINUE")
 
 def add_another_job_position():
@@ -139,7 +152,12 @@ def add_another_job_position():
   deleteCurrentJob = _utility_get_yes_no_input(f"{Color.YELLOW}>>> DO YOU WISH TO CONTINUE? (Y|N): {Color.END}")
   if deleteCurrentJob in VALID_YES:
     try:
+      global weakAreas
+      global missingSkills
       delete_file("JOB_POSITION")
+      # Clear these variables to avoid resume rewrite operation with obselete information
+      weakAreas = []
+      missingSkills = []
     except FileNotFoundError:
       pass
     except PermissionError:
@@ -215,17 +233,50 @@ def add_personal_project():
       _utility_print_warning("NO LINKS WERE ADDED")
   input(">>> PRESS ENTER TO CONTINUE")
 
-def rewrite_resume():
-  pass
-
 def edit_resume():
   resumeExists = check_file_exists("RESUME")
   if(resumeExists):
+    global weakAreas
+    global missingSkills
     _utility_print_warning("A WINDOW WITH YOUR RESUME WILL POP OPEN, SAVE AND CLOSE IT.")
     input(f"{Color.YELLOW}>>>PRESS ENTER TO CONTINUE: {Color.END}")
     edit_stored_resume()
+    # Clear these variables to avoid resume rewrite operation with obselete information
+    weakAreas = []
+    missingSkills = []
   else:
     _utility_print_warning("YOU DON'T HAVE A RESUME TO EDIT.")
+
+def rewrite_resume():
+  global weakAreas
+  global missingSkills
+
+  if weakAreas and missingSkills:
+    resume_description = get_file_contents("RESUME")
+    job_description = get_file_contents("JOB_POSITION")
+    repos = get_repo_info_from_storage()
+    githubProjectsStr = ""
+    for repo in repos:
+      githubProjectsStr += f"Repo name: {repo}, Summary: ({repos[repo]["summary"]}), Keywords: [{repos[repo]["keywords"]}]\n"
+    rewrittenSections = get_rewritten_sections(resume_description, job_description, githubProjectsStr, weakAreas, missingSkills)
+
+    print(f"╔{"═"*BOX_LENGTH}╗")
+    _utility_print_message("CHANGE THIS SECTIONS IN YOUR RESUME MANUALLY: ", False)
+    _utility_print_message(f"SUMMARY: {rewrittenSections.summary}", False)
+
+    _utility_print_message(f"NEW HARD SKILLS:", False)
+    for skill in rewrittenSections.hard_skills:
+      _utility_print_message(skill, False)
+
+    _utility_print_message(f"PROJECTS:", False)
+    for project in rewrittenSections.projects:
+      _utility_print_message(project, False)
+      for bullet in rewrittenSections.projects[project]:
+        _utility_print_message(bullet, False)
+    print(f"╚{"═"*BOX_LENGTH}╝")
+  else:
+    _utility_print_warning("YOU HAVE TO RUN ATS ANALYZER FIRST")
+  input(">>> PRESS ENTER TO CONTINUE")
 
 def write_cover_letter():
   pass

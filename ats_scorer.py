@@ -2,10 +2,8 @@ import json
 import ollama
 
 from storage import get_file_contents
-from schemas import ATSResult, ResumeFacts, RewrittenResumeSections, PersonalProjectInfo
+from schemas import ATSResult, RewrittenResumeSections, PersonalProjectInfo
 from prompts import (
-    FACT_EXTRACTION_PROMPT,
-    FACT_EXTRACTION_SYSTEM_PROMPT,
     GITHUB_PROJECT_PROMPT,
     GITHUB_PROJECT_SYSTEM_PROMPT,
     REWRITE_PROMPT_TEMPLATE,
@@ -22,27 +20,6 @@ MAX_SCORES = {
     "keywords_phrasing": 10,
     "clarity_structure": 10,
 }
-
-def _fact_extraction_from_resume(resume: str) -> ResumeFacts:
-    prompt = FACT_EXTRACTION_PROMPT.format(
-        resume_description=resume
-    )
-
-    response = ollama.chat(
-        model="llama3.1:8b",
-        messages=[
-            {"role": "system", "content": FACT_EXTRACTION_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
-        ],
-        format="json"  # CRITICAL
-    )
-
-    try:
-        raw = json.loads(response["message"]["content"])
-        ats_result = ResumeFacts(**raw)
-    except Exception as e:
-        raise RuntimeError("Invalid JSON returned by Llama") from e
-    return ats_result
 
 def _enforce_balanced_rules(result: ATSResult) -> ATSResult:
     # Clamp category scores
@@ -99,27 +76,11 @@ def _decide_action(score: int) -> str:
     else:
         return "SKIP"
 
-def _rewrite_resume(
-    resume_text: str,
-    job_description: str,
-    allowed_facts: dict,
-    weak_areas: list,
-    missing_skills: list
-) -> RewrittenResumeSections:
-
-    # extractedFacts = fact_extraction_from_resume(resume_description)
-    #     if action == "REWRITE_RESUME":
-    #         rewriteContent = rewrite_resume(resume_description,
-    #                                         job_description,
-    #                                         extractedFacts.model_dump(),
-    #                                         result.weak_areas,
-    #                                         result.missing_required_skills)
-    #         print(rewriteContent, end='\n')
-
+def get_rewritten_sections(resume_text: str, job_description: str, personalProjects: str, weak_areas: list, missing_skills: list) -> RewrittenResumeSections:
     prompt = REWRITE_PROMPT_TEMPLATE.format(
         resume_text=resume_text,
         job_description=job_description,
-        allowed_facts=json.dumps(allowed_facts, indent=2),
+        personal_projects=personalProjects,
         weak_areas=weak_areas,
         missing_skills=missing_skills
     )
@@ -143,9 +104,6 @@ def _rewrite_resume(
         raise
     except Exception as e:
         raise RuntimeError("Invalid JSON returned by Llama") from e
-    # # Refusal handling
-    # if '"refusal": true' in content:
-    #     raise RuntimeError("Resume rewrite refused due to insufficient factual support")
 
     return rewrite_result
 
@@ -182,8 +140,3 @@ def get_project_summary_and_keywords(repository: str, defaultMainBranch: str, re
         raise RuntimeError("Invalid JSON returned by Llama") from e
 
     return projectSummary
-# def validate_no_new_skills(original_facts, rewritten_text):
-#     for skill in rewritten_text.split():
-#         if skill in SUSPICIOUS_SKILLS and skill not in original_facts["skills"]:
-#             return False
-#     return True

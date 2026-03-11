@@ -48,90 +48,66 @@ TASK:
 """
 
 REWRITE_SYSTEM_PROMPT = """
-You are a resume rewriting engine for embedded software roles.
+You are a resume rewriting engine. Your job is to rewrite specific resume sections to improve ATS (Applicant Tracking System) scores for a given job description.
 
-ABSOLUTE RULES:
-- You may ONLY use facts provided in ALLOWED_FACTS.
-- Do NOT add new skills, tools, protocols, or domains not explicitly present.
-- Do NOT claim experience not explicitly present.
-- Rewriting means rephrasing, clarifying, or reordering ONLY.
-- If a requested keyword is not supported by facts, DO NOT add it.
-- Optimize wording for ATS systems.
-- Preserve truthfulness.
+## YOUR ONLY JOB
+Rewrite these three sections: summary, hard_skills, projects.
+You CANNOT invent facts. You can only rephrase, reorder, or use synonyms for things already in the resume.
 
-Output rules:
-- Return ONLY valid JSON.
-- The JSON MUST match the schema exactly.
-- Use empty arrays if no items are found.
-- Do NOT include explanations, comments, markdown, or extra fields.
+## STRICT RULES
+1. NEVER add a skill, tool, technology, or domain that is not already in the resume.
+2. NEVER invent a project. Only include a project if it appears in the GITHUB PROJECTS list.
+3. For each MISSING KEYWORD: search the resume for supporting evidence FIRST. If none exists, skip it. Do not add it.
+4. Only include a project in the output if its keywords are relevant to the job description.
+5. Bullet points for projects must be based on the project's provided description — do not invent achievements.
 
-If improvement is not possible under these rules, return:
-{ "refusal": true, "reason": "Insufficient factual support" }
+## OUTPUT FORMAT
+Return ONLY a JSON object. No explanation. No markdown. No extra fields.
+The JSON must follow this exact schema:
 
-Return the rewritten JSON only, unless refusing, in the following Schema:
-class RewrittenResumeSections(BaseModel):
-    summary: str
-    hard_skills: List[str]
-    projects: Dict[str, List[str]]
+{
+  "summary": "<rewritten summary string>",
+  "hard_skills": ["<skill 1>", "<skill 2>", "..."],
+  "projects": {
+    "<project name>": ["<bullet point 1>", "<bullet point 2>"]
+  }
+}
+
+If projects section should be empty, use: "projects": {}
+If you cannot rewrite while following all rules, return:
+{"refusal": true, "reason": "<brief reason>"}
+
+## EXAMPLE (follow this pattern)
+Input resume has: "Experience with FreeRTOS and bare-metal C for STM32"
+Job requires: "RTOS experience"
+Correct output in hard_skills: "FreeRTOS / Real-Time Operating Systems (RTOS)"
+WRONG output: "FreeRTOS, Zephyr, ThreadX" ← you added Zephyr and ThreadX which aren't in the resume
 """
 
 REWRITE_PROMPT_TEMPLATE = """
-JOB DESCRIPTION:
+## JOB DESCRIPTION
 {job_description}
 
-ORIGINAL RESUME:
+## ORIGINAL RESUME
 {resume_text}
 
-ALLOWED_FACTS:
-{allowed_facts}
+## GITHUB PROJECTS name, (description), [keywords]
+{personal_projects}
 
-ATS WEAKNESSES:
+## ATS WEAKNESSES IDENTIFIED
 {weak_areas}
 
-MISSING KEYWORDS (ONLY ADD IF SUPPORTED BY FACTS):
+## MISSING KEYWORDS — CHECK RESUME BEFORE USING
+For each keyword below, only include it if the resume already contains supporting evidence.
 {missing_skills}
 
-TASK:
-Rewrite the following sections of the resume: summary, hardskills and projects. In order to improve ATS match while obeying ALL rules.
-"""
-
-FACT_EXTRACTION_SYSTEM_PROMPT = """
-You are a strict information extraction engine.
-
-Extraction rules:
-- skills: only explicitly listed skills or abilities
-- tools: only explicitly named software, hardware, or platforms
-- protocols: only explicitly named technical or communication protocols
-- domains: only explicitly named industries, fields, or application areas
-- responsibilities: only explicitly stated duties or actions
-
-Output rules:
-- Return ONLY valid JSON.
-- The JSON MUST match the schema exactly.
-- Use empty arrays if no items are found.
-- Do NOT include explanations, comments, markdown, or extra fields.
-
-Schema (must match exactly):
-
-class ResumeFacts(BaseModel):
-    skills: List[str]
-    tools: List[str]
-    protocols: List[str]
-    domains: List[str]
-    responsibilities: List[str]
-"""
-
-FACT_EXTRACTION_PROMPT = """
-Your task:
-Extract and return in JSON format.
-
-- Extract ONLY factual information that is explicitly stated in the provided resume text.
-- Do NOT infer, assume, normalize, generalize, or expand abbreviations.
-- Do NOT add technologies, skills, tools, or concepts that are not literally present.
-- If information is ambiguous, implied, or uncertain, omit it entirely.
-
-RESUME:
-{resume_description}
+## TASK — FOLLOW THESE STEPS IN ORDER
+Step 1: Read the job description and identify the top skills and themes it requires.
+Step 2: Read the resume and note what experience and skills are already present.
+Step 3: Rewrite the summary to highlight experience most relevant to the job description. Do not add new facts.
+Step 4: Rewrite the hard skills list. Add relevant synonyms or ATS-friendly phrasings for existing skills. For missing keywords, only include if there is clear resume evidence.
+Step 5: Review the github projects list. For each project, decide if its keywords match the job description. If yes, write 2-3 bullet points based ONLY on the provided project description.
+Step 6: Output the final JSON. Nothing else.
 """
 
 GITHUB_PROJECT_SYSTEM_PROMPT = """

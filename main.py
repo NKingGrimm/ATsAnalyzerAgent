@@ -33,11 +33,11 @@ def mainCLI():
                 case "3":
                     add_personal_project()
                 case "4":
-                    rewrite_resume()
-                case "5":
-                    write_cover_letter()
-                case "6":
                     edit_resume()
+                case "5":
+                    rewrite_resume()
+                case "6":
+                    write_cover_letter()
                 case "7":
                     break
                 case _:
